@@ -16,6 +16,7 @@ const AREA_HEX: Record<Area, string> = {
   Farm: '#22c55e',
   Business: '#f59e0b',
   Catering: '#a855f7',
+  Other: '#6b7280',
 }
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']

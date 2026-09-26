@@ -1,4 +1,4 @@
-export const AREAS = ['Personal', 'House', 'Farm', 'Business', 'Catering'] as const
+export const AREAS = ['Personal', 'House', 'Farm', 'Business', 'Catering', 'Other'] as const
 export type Area = typeof AREAS[number]
 
 export const AREA_ICONS: Record<Area, string> = {
@@ -7,6 +7,7 @@ export const AREA_ICONS: Record<Area, string> = {
   Farm: '🌱',
   Business: '💼',
   Catering: '🍽',
+  Other: '📦',
 }
 
 export const AREA_COLORS: Record<Area, string> = {
@@ -15,6 +16,7 @@ export const AREA_COLORS: Record<Area, string> = {
   Farm: 'green',
   Business: 'amber',
   Catering: 'purple',
+  Other: 'gray',
 }
 
 export const AREA_BG: Record<Area, string> = {
@@ -23,6 +25,7 @@ export const AREA_BG: Record<Area, string> = {
   Farm: 'bg-green-50 border-green-200',
   Business: 'bg-amber-50 border-amber-200',
   Catering: 'bg-purple-50 border-purple-200',
+  Other: 'bg-gray-50 border-gray-200',
 }
 
 export const AREA_ACCENT: Record<Area, string> = {
@@ -31,6 +34,7 @@ export const AREA_ACCENT: Record<Area, string> = {
   Farm: 'text-green-600',
   Business: 'text-amber-600',
   Catering: 'text-purple-600',
+  Other: 'text-gray-600',
 }
 
 export const PAYMENT_METHODS = ['Cash', 'GCash', 'Bank', 'Maya', 'Credit Card', 'Debit Card', 'Other'] as const
@@ -48,6 +52,7 @@ export const EXPENSE_CATEGORIES: Record<Area, string[]> = {
   Farm: ['Seeds', 'Fertilizer', 'Organic Inputs', 'Pesticides', 'Labor', 'Machinery', 'Fuel', 'Irrigation', 'Animal Feed', 'Livestock', 'Farm Tools', 'Transportation', 'Land Rental', 'Harvesting', 'Packaging', 'Farm Maintenance', 'Other'],
   Business: ['Inventory', 'Supplies', 'Equipment', 'Rent', 'Utilities', 'Transportation', 'Marketing', 'Packaging', 'Labor', 'Salaries', 'Permits', 'Internet', 'Software', 'Repairs', 'Other'],
   Catering: ['Ingredients', 'Meat', 'Vegetables', 'Rice', 'Drinks', 'Packaging', 'Utensils', 'Gas', 'Fuel', 'Transportation', 'Delivery', 'Labor', 'Staff', 'Equipment Rental', 'Event Rental', 'Marketing', 'Cleaning', 'Other'],
+  Other: ['Miscellaneous', 'One-time Expense', 'Unexpected', 'Other'],
 }
 
 export const INCOME_CATEGORIES: Record<Area, string[]> = {
@@ -56,6 +61,7 @@ export const INCOME_CATEGORIES: Record<Area, string[]> = {
   Farm: ['Crop Sales', 'Livestock Sales', 'Farm Products', 'Coconut', 'Ube', 'Other Farm Income'],
   Business: ['Product Sales', 'Service Income', 'Online Sales', 'Other'],
   Catering: ['Catering Package', 'Food Orders', 'Event', 'Delivery', 'Down Payment', 'Full Payment', 'Other'],
+  Other: ['Miscellaneous Income', 'Gift', 'Refund', 'Other'],
 }
 
 export const BUDGET_WARNING = {

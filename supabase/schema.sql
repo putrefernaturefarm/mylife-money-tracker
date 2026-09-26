@@ -36,7 +36,7 @@ create table if not exists public.accounts (
 create table if not exists public.categories (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid references auth.users(id) on delete cascade,
-  area text not null check (area in ('Personal','House','Farm','Business','Catering')),
+  area text not null check (area in ('Personal','House','Farm','Business','Catering','Other')),
   name text not null,
   type text not null check (type in ('income','expense')),
   is_default boolean default false,
@@ -48,7 +48,7 @@ create table if not exists public.transactions (
   user_id uuid references auth.users(id) on delete cascade not null,
   account_id uuid references public.accounts(id) on delete set null,
   type text not null check (type in ('income','expense','transfer')),
-  area text check (area in ('Personal','House','Farm','Business','Catering')),
+  area text check (area in ('Personal','House','Farm','Business','Catering','Other')),
   category text,
   amount numeric(12,2) not null,
   transaction_date date not null default current_date,
@@ -65,7 +65,7 @@ create table if not exists public.transactions (
 create table if not exists public.budgets (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid references auth.users(id) on delete cascade not null,
-  area text check (area in ('Personal','House','Farm','Business','Catering')),
+  area text check (area in ('Personal','House','Farm','Business','Catering','Other')),
   category text,
   amount numeric(12,2) not null,
   month integer not null check (month between 1 and 12),
@@ -130,7 +130,7 @@ create table if not exists public.recurring_transactions (
   user_id uuid references auth.users(id) on delete cascade not null,
   type text not null check (type in ('income','expense')),
   amount numeric(12,2) not null,
-  area text check (area in ('Personal','House','Farm','Business','Catering')),
+  area text check (area in ('Personal','House','Farm','Business','Catering','Other')),
   category text,
   description text,
   payment_method text,
@@ -314,4 +314,27 @@ insert into public.categories (user_id, area, name, type, is_default) values
 (null,'Catering','Down Payment','income',true),
 (null,'Catering','Full Payment','income',true),
 (null,'Catering','Other','income',true)
+on conflict do nothing;
+
+-- ─────────────────────────────────────────────
+-- MIGRATIONS: update area check constraints to include 'Other'
+-- ─────────────────────────────────────────────
+alter table public.categories drop constraint if exists categories_area_check;
+alter table public.categories add constraint categories_area_check
+  check (area in ('Personal','House','Farm','Business','Catering','Other'));
+
+alter table public.transactions drop constraint if exists transactions_area_check;
+alter table public.transactions add constraint transactions_area_check
+  check (area in ('Personal','House','Farm','Business','Catering','Other'));
+
+-- Default categories for Other area
+insert into public.categories (user_id, area, name, type, is_default) values
+(null,'Other','Miscellaneous','expense',true),
+(null,'Other','One-time Expense','expense',true),
+(null,'Other','Unexpected','expense',true),
+(null,'Other','Other','expense',true),
+(null,'Other','Miscellaneous Income','income',true),
+(null,'Other','Gift','income',true),
+(null,'Other','Refund','income',true),
+(null,'Other','Other','income',true)
 on conflict do nothing;

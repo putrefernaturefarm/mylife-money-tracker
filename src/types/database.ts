@@ -1,5 +1,5 @@
 export type TransactionType = 'income' | 'expense' | 'transfer'
-export type Area = 'Personal' | 'House' | 'Farm' | 'Business' | 'Catering'
+export type Area = 'Personal' | 'House' | 'Farm' | 'Business' | 'Catering' | 'Other'
 export type PaymentMethod = 'Cash' | 'GCash' | 'Bank' | 'Maya' | 'Credit Card' | 'Debit Card' | 'Other'
 export type Frequency = 'Daily' | 'Weekly' | 'Monthly' | 'Yearly'
 export type CateringStatus = 'Inquiry' | 'Reserved' | 'Down Payment' | 'Confirmed' | 'Completed' | 'Fully Paid' | 'Cancelled'

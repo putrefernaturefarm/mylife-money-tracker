@@ -50,3 +50,134 @@ html {
   background: #d1d5db;
   border-radius: 2px;
 }
+
+/* ─── Dark mode overrides ─── */
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark .bg-white {
+  background-color: #1a1b26;
+}
+
+html.dark .bg-gray-50 {
+  background-color: #1f2030;
+}
+
+html.dark .bg-gray-100 {
+  background-color: #252535;
+}
+
+html.dark .border-gray-100 {
+  border-color: #252535;
+}
+
+html.dark .border-gray-50 {
+  border-color: #1f2030;
+}
+
+html.dark .divide-gray-50 > * + * {
+  border-color: #1f2030;
+}
+
+html.dark .text-gray-900 {
+  color: #e5e7eb;
+}
+
+html.dark .text-gray-800 {
+  color: #d1d5db;
+}
+
+html.dark .text-gray-700 {
+  color: #9ca3af;
+}
+
+html.dark .text-gray-600 {
+  color: #9ca3af;
+}
+
+html.dark .text-gray-500 {
+  color: #6b7280;
+}
+
+html.dark .text-gray-400 {
+  color: #4b5563;
+}
+
+html.dark .text-gray-300 {
+  color: #374151;
+}
+
+html.dark .hover\:bg-gray-50:hover {
+  background-color: #1f2030;
+}
+
+html.dark .hover\:bg-gray-100:hover {
+  background-color: #252535;
+}
+
+html.dark .bg-green-50 {
+  background-color: #0d2010;
+}
+
+html.dark .bg-red-50 {
+  background-color: #200d0d;
+}
+
+html.dark .bg-blue-50 {
+  background-color: #0d1420;
+}
+
+html.dark .bg-amber-50 {
+  background-color: #201a0d;
+}
+
+html.dark .bg-purple-50 {
+  background-color: #1a0d20;
+}
+
+html.dark .bg-indigo-50 {
+  background-color: #0d1020;
+}
+
+html.dark .bg-rose-50 {
+  background-color: #200d10;
+}
+
+html.dark .border-rose-200 {
+  border-color: #4a1a20;
+}
+
+html.dark .border-blue-200 {
+  border-color: #1a2a4a;
+}
+
+html.dark .border-green-200 {
+  border-color: #1a4a20;
+}
+
+html.dark .border-amber-200 {
+  border-color: #4a3a1a;
+}
+
+html.dark .border-purple-200 {
+  border-color: #3a1a4a;
+}
+
+html.dark header {
+  background-color: rgba(15, 17, 23, 0.9);
+  border-color: #252535;
+}
+
+html.dark input,
+html.dark textarea,
+html.dark select {
+  background-color: #252535;
+  border-color: #374151;
+  color: #e5e7eb;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #4b5563;
+}

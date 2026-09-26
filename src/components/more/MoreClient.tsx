@@ -2,12 +2,14 @@
 
 import { useTransition } from 'react'
 import Link from 'next/link'
+import { format } from 'date-fns'
 import {
   Wallet, ChefHat, PiggyBank, HandCoins, RefreshCw,
   BarChart3, LogOut, User, ChevronRight, Tractor, Loader2,
-  FileDown, Shield
+  Download, Moon, Sun
 } from 'lucide-react'
-import { signOut } from '@/lib/actions'
+import { signOut, exportTransactions } from '@/lib/actions'
+import { useTheme } from '@/components/layout/ThemeProvider'
 
 interface Props {
   userEmail: string
@@ -23,15 +25,38 @@ interface MenuSection {
     color: string
     onClick?: () => void
     isButton?: boolean
+    badge?: string
   }[]
 }
 
 export function MoreClient({ userEmail }: Props) {
   const [isPending, startTransition] = useTransition()
+  const [isDownloading, startDownload] = useTransition()
+  const { theme, toggle } = useTheme()
 
   function handleSignOut() {
     startTransition(async () => {
       await signOut()
+    })
+  }
+
+  function handleDownload() {
+    startDownload(async () => {
+      const result = await exportTransactions()
+      if ('error' in result) return
+      if (!result.csv) {
+        alert('No transactions to export.')
+        return
+      }
+      const blob = new Blob([result.csv], { type: 'text/csv' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `transactions-${format(new Date(), 'yyyy-MM-dd')}.csv`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
     })
   }
 
@@ -50,12 +75,27 @@ export function MoreClient({ userEmail }: Props) {
       title: 'Business Areas',
       items: [
         { href: '/catering', icon: ChefHat, label: 'Catering Events', sublabel: 'Events, contracts, and payments', color: 'text-purple-500 bg-purple-50' },
+        { href: '/transactions?area=Farm', icon: Tractor, label: 'Farm Finances', sublabel: 'Farm income and expenses', color: 'text-green-500 bg-green-50' },
+      ],
+    },
+    {
+      title: 'Data & Settings',
+      items: [
         {
-          href: '/transactions?area=Farm',
-          icon: Tractor,
-          label: 'Farm Finances',
-          sublabel: 'Farm income and expenses',
-          color: 'text-green-500 bg-green-50',
+          icon: Download,
+          label: 'Download Data',
+          sublabel: 'Export all transactions as CSV',
+          color: 'text-teal-500 bg-teal-50',
+          isButton: true,
+          onClick: handleDownload,
+        },
+        {
+          icon: theme === 'dark' ? Sun : Moon,
+          label: theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+          sublabel: `Currently ${theme} mode`,
+          color: theme === 'dark' ? 'text-yellow-500 bg-yellow-50' : 'text-slate-500 bg-slate-100',
+          isButton: true,
+          onClick: toggle,
         },
       ],
     },
@@ -94,6 +134,9 @@ export function MoreClient({ userEmail }: Props) {
           <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden divide-y divide-gray-50">
             {section.items.map((item, i) => {
               const Icon = item.icon
+              const isThisDownloading = item.label === 'Download Data' && isDownloading
+              const isThisSigningOut = item.label === 'Sign Out' && isPending
+
               const inner = (
                 <>
                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${item.color}`}>
@@ -103,8 +146,10 @@ export function MoreClient({ userEmail }: Props) {
                     <p className="text-sm font-medium text-gray-800">{item.label}</p>
                     {item.sublabel && <p className="text-xs text-gray-400 truncate">{item.sublabel}</p>}
                   </div>
-                  {item.isButton ? (
-                    isPending ? <Loader2 size={16} className="text-gray-300 animate-spin" /> : <ChevronRight size={16} className="text-gray-300" />
+                  {(isThisDownloading || isThisSigningOut) ? (
+                    <Loader2 size={16} className="text-gray-300 animate-spin" />
+                  ) : item.isButton ? (
+                    <ChevronRight size={16} className="text-gray-300" />
                   ) : (
                     <ChevronRight size={16} className="text-gray-300" />
                   )}
@@ -113,8 +158,12 @@ export function MoreClient({ userEmail }: Props) {
 
               if (item.isButton) {
                 return (
-                  <button key={i} onClick={item.onClick} disabled={isPending}
-                    className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors text-left disabled:opacity-60">
+                  <button
+                    key={i}
+                    onClick={item.onClick}
+                    disabled={isThisDownloading || isThisSigningOut}
+                    className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors text-left disabled:opacity-60"
+                  >
                     {inner}
                   </button>
                 )

@@ -31,7 +31,9 @@ export async function getDashboardData() {
   const availableBalance = (accounts.data ?? []).reduce((s: number, a) => s + (a.current_balance ?? 0), 0)
 
   const areaSummaries: AreaSummary[] = AREAS.map(area => {
-    const areaAll = all.filter(t => t.area === area)
+    const areaAll = area === 'Other'
+      ? all.filter(t => t.area === 'Other' || t.area === null)
+      : all.filter(t => t.area === area)
     const income = areaAll.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
     const expenses = areaAll.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
     return { area, income, expenses, balance: income - expenses }
@@ -95,9 +97,9 @@ export async function getMonthlyReport(month: number, year: number, area?: Area)
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const monthStr = String(month).padStart(2, '0')
-  const startDate = `${year}-${monthStr}-01`
-  const endDate = `${year}-${monthStr}-31`
+  const date = new Date(year, month - 1, 1)
+  const startDate = format(startOfMonth(date), 'yyyy-MM-dd')
+  const endDate = format(endOfMonth(date), 'yyyy-MM-dd')
 
   let query = supabase.from('transactions').select('*')
     .eq('user_id', user.id)

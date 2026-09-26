@@ -7,7 +7,7 @@ import { z } from 'zod'
 
 const TransactionSchema = z.object({
   type: z.enum(['income', 'expense']),
-  area: z.enum(['Personal', 'House', 'Farm', 'Business', 'Catering']),
+  area: z.enum(['Personal', 'House', 'Farm', 'Business', 'Catering', 'Other']),
   category: z.string().min(1),
   amount: z.coerce.number().positive('Amount must be greater than 0'),
   transaction_date: z.string().min(1),
@@ -301,6 +301,32 @@ export async function createDebt(formData: FormData) {
   if (error) return { error: error.message }
   revalidatePath('/debts')
   return { success: true }
+}
+
+// Export
+export async function exportTransactions(): Promise<{ csv: string } | { error: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Unauthorized' }
+
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('*')
+    .eq('user_id', user.id)
+    .neq('type', 'transfer')
+    .order('transaction_date', { ascending: false })
+
+  if (error) return { error: error.message }
+  if (!data || data.length === 0) return { csv: '' }
+
+  const headers = ['Date', 'Type', 'Area', 'Category', 'Description', 'Amount', 'Payment Method', 'Payee', 'Notes']
+  const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`
+  const rows = data.map(t =>
+    [t.transaction_date, t.type, t.area, t.category, t.description, t.amount, t.payment_method, t.payee, t.notes]
+      .map(escape).join(',')
+  )
+
+  return { csv: [headers.join(','), ...rows].join('\n') }
 }
 
 // Logout
