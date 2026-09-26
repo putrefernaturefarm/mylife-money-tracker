@@ -123,6 +123,15 @@ create table if not exists public.recurring_transactions (
 );
 
 -- ─────────────────────────────────────────────
+-- SCHEMA MIGRATIONS (patch pre-existing tables)
+-- ─────────────────────────────────────────────
+alter table public.categories add column if not exists user_id uuid references auth.users(id) on delete cascade;
+alter table public.categories add column if not exists area text;
+alter table public.categories add column if not exists type text;
+alter table public.categories add column if not exists is_default boolean default false;
+alter table public.categories add column if not exists created_at timestamptz default now();
+
+-- ─────────────────────────────────────────────
 -- TRIGGERS
 -- ─────────────────────────────────────────────
 create or replace function update_updated_at()
