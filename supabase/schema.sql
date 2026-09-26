@@ -3,6 +3,24 @@
 create extension if not exists "uuid-ossp";
 
 -- ─────────────────────────────────────────────
+-- CLEANUP: drop incompatible pre-existing tables
+-- ─────────────────────────────────────────────
+do $$
+begin
+  -- categories table exists but belongs to a different project (has business_id, no user_id)
+  if exists (
+    select 1 from information_schema.tables
+    where table_schema = 'public' and table_name = 'categories'
+  ) and not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'categories'
+      and column_name = 'user_id'
+  ) then
+    drop table public.categories cascade;
+  end if;
+end $$;
+
+-- ─────────────────────────────────────────────
 -- TABLES
 -- ─────────────────────────────────────────────
 create table if not exists public.accounts (
