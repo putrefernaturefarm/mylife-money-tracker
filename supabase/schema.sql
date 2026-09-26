@@ -156,35 +156,32 @@ alter table public.savings_goals enable row level security;
 alter table public.debts enable row level security;
 alter table public.recurring_transactions enable row level security;
 
-do $$ begin
-  if not exists (select 1 from pg_policies where policyname = 'accounts_owner' and tablename = 'accounts') then
-    create policy "accounts_owner" on public.accounts for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-  end if;
-  if not exists (select 1 from pg_policies where policyname = 'categories_owner' and tablename = 'categories') then
-    create policy "categories_owner" on public.categories for all using (auth.uid() = user_id or user_id is null) with check (auth.uid() = user_id);
-  end if;
-  if not exists (select 1 from pg_policies where policyname = 'transactions_owner' and tablename = 'transactions') then
-    create policy "transactions_owner" on public.transactions for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-  end if;
-  if not exists (select 1 from pg_policies where policyname = 'budgets_owner' and tablename = 'budgets') then
-    create policy "budgets_owner" on public.budgets for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-  end if;
-  if not exists (select 1 from pg_policies where policyname = 'catering_events_owner' and tablename = 'catering_events') then
-    create policy "catering_events_owner" on public.catering_events for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-  end if;
-  if not exists (select 1 from pg_policies where policyname = 'catering_payments_owner' and tablename = 'catering_payments') then
-    create policy "catering_payments_owner" on public.catering_payments for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-  end if;
-  if not exists (select 1 from pg_policies where policyname = 'savings_goals_owner' and tablename = 'savings_goals') then
-    create policy "savings_goals_owner" on public.savings_goals for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-  end if;
-  if not exists (select 1 from pg_policies where policyname = 'debts_owner' and tablename = 'debts') then
-    create policy "debts_owner" on public.debts for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-  end if;
-  if not exists (select 1 from pg_policies where policyname = 'recurring_owner' and tablename = 'recurring_transactions') then
-    create policy "recurring_owner" on public.recurring_transactions for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-  end if;
-end $$;
+drop policy if exists "accounts_owner" on public.accounts;
+create policy "accounts_owner" on public.accounts for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "categories_owner" on public.categories;
+create policy "categories_owner" on public.categories for all using (auth.uid() = user_id or user_id is null) with check (auth.uid() = user_id);
+
+drop policy if exists "transactions_owner" on public.transactions;
+create policy "transactions_owner" on public.transactions for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "budgets_owner" on public.budgets;
+create policy "budgets_owner" on public.budgets for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "catering_events_owner" on public.catering_events;
+create policy "catering_events_owner" on public.catering_events for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "catering_payments_owner" on public.catering_payments;
+create policy "catering_payments_owner" on public.catering_payments for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "savings_goals_owner" on public.savings_goals;
+create policy "savings_goals_owner" on public.savings_goals for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "debts_owner" on public.debts;
+create policy "debts_owner" on public.debts for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "recurring_owner" on public.recurring_transactions;
+create policy "recurring_owner" on public.recurring_transactions for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- ─────────────────────────────────────────────
 -- DEFAULT CATEGORIES SEED (safe — skips duplicates)
