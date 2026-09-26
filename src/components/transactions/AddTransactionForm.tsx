@@ -3,30 +3,34 @@
 import { useState, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
-import { createTransaction } from '@/lib/actions'
+import { createTransaction, updateTransaction } from '@/lib/actions'
 import { AREAS, EXPENSE_CATEGORIES, INCOME_CATEGORIES, PAYMENT_METHODS, type Area } from '@/lib/constants'
 import { format } from 'date-fns'
-import type { Account } from '@/types/database'
+import type { Account, Transaction } from '@/types/database'
 
 interface Props {
   accounts: Account[]
+  transaction?: Transaction
+  onSuccess?: () => void
 }
 
-export function AddTransactionForm({ accounts }: Props) {
+export function AddTransactionForm({ accounts, transaction, onSuccess }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const initialType = (searchParams.get('type') as 'income' | 'expense') ?? 'expense'
   const initialArea = (searchParams.get('area') as Area) ?? 'House'
 
-  const [type, setType] = useState<'income' | 'expense'>(initialType)
-  const [area, setArea] = useState<Area>(initialArea)
-  const [category, setCategory] = useState('')
-  const [amount, setAmount] = useState('')
-  const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'))
-  const [description, setDescription] = useState('')
-  const [payee, setPayee] = useState('')
-  const [paymentMethod, setPaymentMethod] = useState('Cash')
-  const [notes, setNotes] = useState('')
+  const [type, setType] = useState<'income' | 'expense'>(
+    (transaction?.type as 'income' | 'expense') ?? initialType
+  )
+  const [area, setArea] = useState<Area>((transaction?.area as Area) ?? initialArea)
+  const [category, setCategory] = useState(transaction?.category ?? '')
+  const [amount, setAmount] = useState(transaction ? String(transaction.amount) : '')
+  const [date, setDate] = useState(transaction?.transaction_date ?? format(new Date(), 'yyyy-MM-dd'))
+  const [description, setDescription] = useState(transaction?.description ?? '')
+  const [payee, setPayee] = useState(transaction?.payee ?? '')
+  const [paymentMethod, setPaymentMethod] = useState(transaction?.payment_method ?? 'Cash')
+  const [notes, setNotes] = useState(transaction?.notes ?? '')
   const [accountId, setAccountId] = useState(accounts[0]?.id ?? '')
   const [error, setError] = useState('')
   const [isPending, startTransition] = useTransition()
@@ -66,15 +70,25 @@ export function AddTransactionForm({ accounts }: Props) {
     if (payee) formData.set('payee', payee)
     formData.set('payment_method', paymentMethod)
     if (notes) formData.set('notes', notes)
-    if (accountId) formData.set('account_id', accountId)
+    if (accountId && !transaction) formData.set('account_id', accountId)
 
     startTransition(async () => {
-      const result = await createTransaction(formData)
-      if ('error' in result && result.error) {
-        setError(result.error)
+      if (transaction) {
+        const result = await updateTransaction(transaction.id, formData)
+        if ('error' in result && result.error) {
+          setError(result.error)
+        } else {
+          onSuccess?.()
+          router.refresh()
+        }
       } else {
-        router.push('/')
-        router.refresh()
+        const result = await createTransaction(formData)
+        if ('error' in result && result.error) {
+          setError(result.error)
+        } else {
+          router.push('/')
+          router.refresh()
+        }
       }
     })
   }
@@ -207,8 +221,8 @@ export function AddTransactionForm({ accounts }: Props) {
         </select>
       </div>
 
-      {/* Account (if any) */}
-      {accounts.length > 0 && (
+      {/* Account (create mode only) */}
+      {!transaction && accounts.length > 0 && (
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Account</label>
           <select
@@ -250,7 +264,7 @@ export function AddTransactionForm({ accounts }: Props) {
         }`}
       >
         {isPending && <Loader2 size={18} className="animate-spin" />}
-        Save {type === 'expense' ? 'Expense' : 'Income'}
+        {transaction ? 'Update' : 'Save'} {type === 'expense' ? 'Expense' : 'Income'}
       </button>
     </form>
   )

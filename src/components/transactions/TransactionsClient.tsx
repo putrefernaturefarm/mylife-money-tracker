@@ -2,11 +2,12 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { Search, Filter, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, Trash2, Pencil, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { formatPeso, formatDate } from '@/lib/utils'
 import { AREAS, AREA_ICONS, type Area } from '@/lib/constants'
 import { deleteTransaction } from '@/lib/actions'
 import type { Transaction } from '@/types/database'
+import { AddTransactionForm } from './AddTransactionForm'
 
 interface Props {
   transactions: Transaction[]
@@ -22,6 +23,7 @@ export function TransactionsClient({ transactions, total, page, limit, filters }
   const [search, setSearch] = useState(filters.search ?? '')
   const [showFilters, setShowFilters] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const [editingTx, setEditingTx] = useState<Transaction | null>(null)
 
   function updateFilter(key: string, value: string) {
     const params = new URLSearchParams()
@@ -135,12 +137,18 @@ export function TransactionsClient({ transactions, total, page, limit, filters }
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <p className={`text-sm font-semibold flex-shrink-0 ${
+              <div className="flex items-center gap-1">
+                <p className={`text-sm font-semibold flex-shrink-0 mr-1 ${
                   tx.type === 'income' ? 'text-green-600' : 'text-red-500'
                 }`}>
                   {tx.type === 'income' ? '+' : '-'}{formatPeso(tx.amount)}
                 </p>
+                <button
+                  onClick={() => setEditingTx(tx)}
+                  className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-300 hover:text-blue-400 transition-all"
+                >
+                  <Pencil size={14} />
+                </button>
                 <button
                   onClick={() => handleDelete(tx.id)}
                   disabled={isPending}
@@ -180,6 +188,34 @@ export function TransactionsClient({ transactions, total, page, limit, filters }
           >
             Next <ChevronRight size={16} />
           </button>
+        </div>
+      )}
+
+      {/* Edit bottom sheet */}
+      {editingTx && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setEditingTx(null)}
+          />
+          <div className="relative bg-white rounded-t-2xl max-h-[92vh] flex flex-col">
+            <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-gray-100">
+              <h2 className="font-semibold text-gray-900">Edit Transaction</h2>
+              <button
+                onClick={() => setEditingTx(null)}
+                className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="overflow-y-auto px-4 py-4 pb-8">
+              <AddTransactionForm
+                accounts={[]}
+                transaction={editingTx}
+                onSuccess={() => setEditingTx(null)}
+              />
+            </div>
+          </div>
         </div>
       )}
     </div>
