@@ -1,13 +1,11 @@
--- MyLife Money Tracker — Complete Database Schema
--- Run this in Supabase SQL Editor
+-- MyLife Money Tracker — Complete Database Schema (idempotent — safe to re-run)
 
--- Enable UUID extension
 create extension if not exists "uuid-ossp";
 
 -- ─────────────────────────────────────────────
--- ACCOUNTS (wallets)
+-- TABLES
 -- ─────────────────────────────────────────────
-create table public.accounts (
+create table if not exists public.accounts (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid references auth.users(id) on delete cascade not null,
   name text not null,
@@ -17,10 +15,7 @@ create table public.accounts (
   created_at timestamptz default now()
 );
 
--- ─────────────────────────────────────────────
--- CATEGORIES (default + custom)
--- ─────────────────────────────────────────────
-create table public.categories (
+create table if not exists public.categories (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid references auth.users(id) on delete cascade,
   area text not null check (area in ('Personal','House','Farm','Business','Catering')),
@@ -30,10 +25,7 @@ create table public.categories (
   created_at timestamptz default now()
 );
 
--- ─────────────────────────────────────────────
--- TRANSACTIONS
--- ─────────────────────────────────────────────
-create table public.transactions (
+create table if not exists public.transactions (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid references auth.users(id) on delete cascade not null,
   account_id uuid references public.accounts(id) on delete set null,
@@ -52,10 +44,7 @@ create table public.transactions (
   updated_at timestamptz default now()
 );
 
--- ─────────────────────────────────────────────
--- BUDGETS
--- ─────────────────────────────────────────────
-create table public.budgets (
+create table if not exists public.budgets (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid references auth.users(id) on delete cascade not null,
   area text check (area in ('Personal','House','Farm','Business','Catering')),
@@ -67,10 +56,7 @@ create table public.budgets (
   unique (user_id, area, category, month, year)
 );
 
--- ─────────────────────────────────────────────
--- CATERING EVENTS
--- ─────────────────────────────────────────────
-create table public.catering_events (
+create table if not exists public.catering_events (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid references auth.users(id) on delete cascade not null,
   event_name text not null,
@@ -86,10 +72,7 @@ create table public.catering_events (
   updated_at timestamptz default now()
 );
 
--- ─────────────────────────────────────────────
--- CATERING PAYMENTS
--- ─────────────────────────────────────────────
-create table public.catering_payments (
+create table if not exists public.catering_payments (
   id uuid primary key default uuid_generate_v4(),
   event_id uuid references public.catering_events(id) on delete cascade not null,
   user_id uuid references auth.users(id) on delete cascade not null,
@@ -100,10 +83,7 @@ create table public.catering_payments (
   created_at timestamptz default now()
 );
 
--- ─────────────────────────────────────────────
--- SAVINGS GOALS
--- ─────────────────────────────────────────────
-create table public.savings_goals (
+create table if not exists public.savings_goals (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid references auth.users(id) on delete cascade not null,
   name text not null,
@@ -113,10 +93,7 @@ create table public.savings_goals (
   created_at timestamptz default now()
 );
 
--- ─────────────────────────────────────────────
--- DEBTS
--- ─────────────────────────────────────────────
-create table public.debts (
+create table if not exists public.debts (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid references auth.users(id) on delete cascade not null,
   type text not null check (type in ('owed_to_us','we_owe')),
@@ -130,10 +107,7 @@ create table public.debts (
   created_at timestamptz default now()
 );
 
--- ─────────────────────────────────────────────
--- RECURRING TRANSACTIONS
--- ─────────────────────────────────────────────
-create table public.recurring_transactions (
+create table if not exists public.recurring_transactions (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid references auth.users(id) on delete cascade not null,
   type text not null check (type in ('income','expense')),
@@ -149,7 +123,7 @@ create table public.recurring_transactions (
 );
 
 -- ─────────────────────────────────────────────
--- UPDATED_AT TRIGGER
+-- TRIGGERS
 -- ─────────────────────────────────────────────
 create or replace function update_updated_at()
 returns trigger language plpgsql as $$
@@ -159,10 +133,12 @@ begin
 end;
 $$;
 
+drop trigger if exists trg_transactions_updated_at on public.transactions;
 create trigger trg_transactions_updated_at
   before update on public.transactions
   for each row execute function update_updated_at();
 
+drop trigger if exists trg_catering_events_updated_at on public.catering_events;
 create trigger trg_catering_events_updated_at
   before update on public.catering_events
   for each row execute function update_updated_at();
@@ -180,22 +156,40 @@ alter table public.savings_goals enable row level security;
 alter table public.debts enable row level security;
 alter table public.recurring_transactions enable row level security;
 
--- Policies: each user can only see/mutate their own data
-create policy "accounts_owner" on public.accounts for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-create policy "categories_owner" on public.categories for all using (auth.uid() = user_id or user_id is null) with check (auth.uid() = user_id);
-create policy "transactions_owner" on public.transactions for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-create policy "budgets_owner" on public.budgets for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-create policy "catering_events_owner" on public.catering_events for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-create policy "catering_payments_owner" on public.catering_payments for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-create policy "savings_goals_owner" on public.savings_goals for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-create policy "debts_owner" on public.debts for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-create policy "recurring_owner" on public.recurring_transactions for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+do $$ begin
+  if not exists (select 1 from pg_policies where policyname = 'accounts_owner' and tablename = 'accounts') then
+    create policy "accounts_owner" on public.accounts for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+  end if;
+  if not exists (select 1 from pg_policies where policyname = 'categories_owner' and tablename = 'categories') then
+    create policy "categories_owner" on public.categories for all using (auth.uid() = user_id or user_id is null) with check (auth.uid() = user_id);
+  end if;
+  if not exists (select 1 from pg_policies where policyname = 'transactions_owner' and tablename = 'transactions') then
+    create policy "transactions_owner" on public.transactions for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+  end if;
+  if not exists (select 1 from pg_policies where policyname = 'budgets_owner' and tablename = 'budgets') then
+    create policy "budgets_owner" on public.budgets for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+  end if;
+  if not exists (select 1 from pg_policies where policyname = 'catering_events_owner' and tablename = 'catering_events') then
+    create policy "catering_events_owner" on public.catering_events for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+  end if;
+  if not exists (select 1 from pg_policies where policyname = 'catering_payments_owner' and tablename = 'catering_payments') then
+    create policy "catering_payments_owner" on public.catering_payments for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+  end if;
+  if not exists (select 1 from pg_policies where policyname = 'savings_goals_owner' and tablename = 'savings_goals') then
+    create policy "savings_goals_owner" on public.savings_goals for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+  end if;
+  if not exists (select 1 from pg_policies where policyname = 'debts_owner' and tablename = 'debts') then
+    create policy "debts_owner" on public.debts for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+  end if;
+  if not exists (select 1 from pg_policies where policyname = 'recurring_owner' and tablename = 'recurring_transactions') then
+    create policy "recurring_owner" on public.recurring_transactions for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+  end if;
+end $$;
 
 -- ─────────────────────────────────────────────
--- DEFAULT CATEGORIES SEED
+-- DEFAULT CATEGORIES SEED (safe — skips duplicates)
 -- ─────────────────────────────────────────────
 insert into public.categories (user_id, area, name, type, is_default) values
--- PERSONAL expense
 (null,'Personal','Clothing','expense',true),
 (null,'Personal','Personal Care','expense',true),
 (null,'Personal','Mobile Load','expense',true),
@@ -208,12 +202,10 @@ insert into public.categories (user_id, area, name, type, is_default) values
 (null,'Personal','Hobbies','expense',true),
 (null,'Personal','Gifts','expense',true),
 (null,'Personal','Other','expense',true),
--- PERSONAL income
 (null,'Personal','Salary','income',true),
 (null,'Personal','Allowance','income',true),
 (null,'Personal','Freelance','income',true),
 (null,'Personal','Other','income',true),
--- HOUSE expense
 (null,'House','Groceries','expense',true),
 (null,'House','Electricity','expense',true),
 (null,'House','Water','expense',true),
@@ -228,11 +220,9 @@ insert into public.categories (user_id, area, name, type, is_default) values
 (null,'House','Transportation','expense',true),
 (null,'House','Food','expense',true),
 (null,'House','Other','expense',true),
--- HOUSE income
 (null,'House','Rental','income',true),
 (null,'House','Household Contribution','income',true),
 (null,'House','Other','income',true),
--- FARM expense
 (null,'Farm','Seeds','expense',true),
 (null,'Farm','Fertilizer','expense',true),
 (null,'Farm','Organic Inputs','expense',true),
@@ -250,14 +240,12 @@ insert into public.categories (user_id, area, name, type, is_default) values
 (null,'Farm','Packaging','expense',true),
 (null,'Farm','Farm Maintenance','expense',true),
 (null,'Farm','Other','expense',true),
--- FARM income
 (null,'Farm','Crop Sales','income',true),
 (null,'Farm','Livestock Sales','income',true),
 (null,'Farm','Farm Products','income',true),
 (null,'Farm','Coconut','income',true),
 (null,'Farm','Ube','income',true),
 (null,'Farm','Other Farm Income','income',true),
--- BUSINESS expense
 (null,'Business','Inventory','expense',true),
 (null,'Business','Supplies','expense',true),
 (null,'Business','Equipment','expense',true),
@@ -273,12 +261,10 @@ insert into public.categories (user_id, area, name, type, is_default) values
 (null,'Business','Software','expense',true),
 (null,'Business','Repairs','expense',true),
 (null,'Business','Other','expense',true),
--- BUSINESS income
 (null,'Business','Product Sales','income',true),
 (null,'Business','Service Income','income',true),
 (null,'Business','Online Sales','income',true),
 (null,'Business','Other','income',true),
--- CATERING expense
 (null,'Catering','Ingredients','expense',true),
 (null,'Catering','Meat','expense',true),
 (null,'Catering','Vegetables','expense',true),
@@ -297,15 +283,11 @@ insert into public.categories (user_id, area, name, type, is_default) values
 (null,'Catering','Marketing','expense',true),
 (null,'Catering','Cleaning','expense',true),
 (null,'Catering','Other','expense',true),
--- CATERING income
 (null,'Catering','Catering Package','income',true),
 (null,'Catering','Food Orders','income',true),
 (null,'Catering','Event','income',true),
 (null,'Catering','Delivery','income',true),
 (null,'Catering','Down Payment','income',true),
 (null,'Catering','Full Payment','income',true),
-(null,'Catering','Other','income',true);
-
--- Supabase Storage bucket for receipts
--- Run this separately or via Supabase dashboard:
--- insert into storage.buckets (id, name, public) values ('receipts', 'receipts', false);
+(null,'Catering','Other','income',true)
+on conflict do nothing;
